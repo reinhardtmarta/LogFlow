@@ -1,6 +1,7 @@
 
 
 # 🌿 Logiflow: The Human-Centric AI Logistics Bridge
+![LogiFlow](LogiFlow/logiflowlogo.png)
 
 
 
