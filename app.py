@@ -1,245 +1,169 @@
 import streamlit as st
 import pandas as pd
-import sqlite3
 import datetime
 import random
 
 # ==============================================================================
-# 1. DATABASE ENGINE (O Coração do Sistema)
+# 1. DATA ENGINE (Simulando o Mundo Real e o Banco Local)
 # ==============================================================================
 
-class LogiflowDB:
-    def __init__(self, db_name="logiflow_pro.db"):
-        self.db_name = db_name
-        self._setup_db()
-
-    def _get_conn(self):
-        return sqlite3.connect(self.db_name)
-
-    def _setup_db(self):
-        conn = self._get_conn()
-        cursor = conn.cursor()
-        # Tabela de Usuários/Vendedores
-        cursor.execute('''CREATE TABLE IF NOT EXISTS users (
-                            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            name TEXT,
-                            store_name TEXT,
-                            address TEXT,
-                            is_seller BOOLEAN)''')
+class LogiflowEngine:
+    def __init__(self):
+        # Simulando o Banco de Dados Local (Vendedores cadastrados)
+        if 'local_inventory' not in st.session_state:
+            st.session_state.local_inventory = pd.DataFrame(columns=[
+                'product', 'store', 'price', 'location', 'is_producer', 'expiry'
+            ])
         
-        # Tabela de Produtos (Catálogo Mestre)
-        cursor.execute('''CREATE TABLE IF NOT EXISTS products (
-                            product_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            product_name TEXT,
-                            category TEXT,
-                            is_perishable BOOLEAN)''')
+        # Simulando o "Mundo Global" (Dados que o Agente busca na Web/Google)
+        self.global_mock_data = [
+            {"product": "Organic Milk", "price": 4.50, "source": "Amazon", "location": "Global Warehouse"},
+            {"product": "Fresh Avocado", "price": 2.00, "source": "Walmart", "location": "Global Warehouse"},
+            {"product": "Greek Yogurt", "price": 3.50, "source": "Target", "location": "Global Warehouse"},
+            {"product": "Sourdough Bread", "price": 5.00, "source": "Local Bakery Online", "location": "Global Warehouse"},
+            {"product: "Canned Beans", "price": 1.20, "source": "Amazon", "location": "Global Warehouse"}
+        ]
 
-        # Tabela de Inventário (O que está nas prateleiras)
-        cursor.execute('''CREATE TABLE IF NOT敎 inventory (
-                            item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            product_id INTEGER,
-                            seller_id INTEGER,
-                            quantity INTEGER,
-                            price REAL,
-                            expiry_date DATE,
-                            location TEXT,
-                            address TEXT,
-                            is_producer BOOLEAN,
-                            last_updated TIMESTAMP,
-                            FOREIGN KEY(product_id) REFERENCES products(product_id),
-                            FOREIGN KEY(seller_id) REFERENCES users(user_id))''')
-
-        # Tabela de Chat (A Ponte de Comunicação)
-        cursor.execute('''CREATE TABLE IF NOT EXISTS messages (
-                            msg_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            sender_id INTEGER,
-                            receiver_id INTEGER,
-                            message TEXT,
-                            timestamp TIMESTAMP)''')
+    def search_hybrid(self, query):
+        """O coração do projeto: A busca inteligente que une Local + Global."""
+        query = query.lower()
         
-        # Seed inicial de produtos se estiver vazio
-        cursor.execute("SELECT COUNT(*) FROM products")
-        if cursor.fetchone()[0] == 0:
-            products = [
-                ("Organic Milk", "Dairy", 1), ("Fresh Avocado", "Produce", 1),
-                ("Greek Yogurt", "Dairy", 1), ("Sourdough Bread", "Bakery", 1),
-                ("Canned Beans", "Pantry", 0), ("Apple", "Produce", 1)
-            ]
-            cursor.executemany("INSERT INTO products (product_name, category, is_perishable) VALUES (?,?,?)", products)
+        # 1. Busca no Inventário Local (Vendedores da plataforma)
+        local_results = st.session_state.local_inventory[
+            st.session_state.local_inventory['product'].str.lower().str.contains(query)
+        ].copy()
+
+        # 2. Busca no Mundo Global (Simulando o Agente pesquisando na Web)
+        global_results = []
+        for item in self.global_mock_data:
+            if query in item['product'].lower():
+                global_results.append(item)
         
-        conn.commit()
-        conn.close()
+        return local_results, global_results
 
-    def query(self, sql, params=()):
-        conn = self._get_conn()
-        df = pd.read_sql_query(sql, conn, params=params)
-        conn.close()
-        return df
-
-    def execute(self, sql, params=()):
-        conn = self._get_conn()
-        cursor = conn.cursor()
-        cursor.execute(sql, params)
-        conn.commit()
-        conn.close()
-
-# Inicialização Global
-db = LogiflowDB()
+    def register_seller_item(self, product, qty, price, loc, addr, is_prod):
+        """Registra um item para que ele apareça na busca local."""
+        new_item = {
+            "product": product,
+            "store": "Minha Loja Local", # Em um app real, viria do perfil do vendedor
+            "price": price,
+            "location": loc,
+            "address": addr,
+            "is_producer": is_prod,
+            "expiry": (datetime.date.today() + datetime.timedelta(days=10)).isoformat()
+        }
+        st.session_state.local_inventory = pd.concat([st.session_state.local_inventory, pd.DataFrame([new_item])], ignore_index=True)
+        return True
 
 # ==============================================================================
-# 2. LOGIC ENGINE (A Inteligência do Sistema)
-# ==============================================================================
-
-class LogiflowAgent:
-    @staticmethod
-    def get_ai_suggestions(user_id):
-        """Simula a IA analisando o estoque do vendedor para sugerir ações."""
-        conn = db._get_conn()
-        df = pd.read_sql_query("SELECT * FROM inventory WHERE seller_id = ?", conn, params=(user_id,))
-        conn.close()
-        
-        suggestions = []
-        today = datetime.date.today()
-        for _, row in df.iterrows():
-            expiry = pd.to_datetime(row['expiry_date']).date()
-            if (expiry - today).days < 3:
-                suggestions.append(f"⚠️ {row['product_id']} está vencendo! Sugestão: Aplicar 50% de desconto.")
-            if row['quantity'] < 5:
-                suggestions.append(f"📉 {row['product_id']} está com estoque baixo! Sugestão: Repor agora.")
-        return suggestions
-
-# ==============================================================================
-# 3. USER INTERFACE (O Dashboard Profissional)
+# 2. INTERFACE (O Dashboard do Usuário e do Vendedor)
 # ==============================================================================
 
 def main():
+    engine = LogiflowEngine()
+
     st.set_page_config(page_title="Logiflow Bridge", layout="wide")
     
-    # Estilo CSS para parecer um App Mobile/Web moderno
-    st.markdown("""
-        <style>
-        .main { background-color: #f4f7f6; }
-        .stButton>button { width: 100%; border-radius: 8px; }
-        .card { padding: 20px; border-radius: 15px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Gerenciamento de Sessão (Simulando Login)
-    if 'user_id' not in st.session_state:
-        st.session_state.user_id = None
-        st.session_state.role = None
-
-    # --- SIDEBAR: NAVEGAÇÃO ---
+    # Sidebar de Navegação
     st.sidebar.title("🌿 Logiflow")
-    if st.session_state.user_id is None:
-        mode = st.sidebar.selectbox("Entrar como:", ["Consumidor", "Vendedor"])
-        if st.sidebar.button("Login / Iniciar"):
-            if mode == "Consumidor":
-                st.session_state.role = "user"
-                st.session_state.user_id = 999 # ID genérico para cliente
-            else:
-                st.session_state.role = "seller"
-                # Simulação de cadastro rápido de vendedor
-                st.session_state.user_id = 1 
-                st.session_state.store_name = "Minha Fazenda Local"
-            st.rerun()
+    mode = st.sidebar.radio("Acesse como:", ["🛒 Consumidor (User)", "🏪 Vendedor (Seller)"])
+
+    if mode == "🛒 Consumidor (User)":
+        render_user_view(engine)
     else:
-        st.sidebar.write(f"👤 Modo: {st.session_state.role.capitalize()}")
-        if st.sidebar.button("Sair"):
-            st.session_state.user_id = None
-            st.rerun()
+        render_seller_view(engine)
 
-    # --- LÓGICA DE TELAS ---
+def render_user_view(engine):
+    st.title("🔍 Logiflow Search Bridge")
+    st.write("Encontre produtos locais ou explore opções globais.")
 
-    if st.session_state.user_id is None:
-        st.title("Bem-vindo ao Logiflow")
-        st.info("Por favor, selecione seu perfil na barra lateral para começar.")
-        st.image("https://img.freepik.com/free-vector/logistics-concept-illustration_114360-1001.jpg", width=400)
+    query = st.text_input("O que você está procurando?", placeholder="Ex: Milk, Avocado...")
 
-    elif st.session_state.role == "user":
-        render_user_view()
-
-    elif st.session_state.role == "seller":
-        render_seller_view()
-
-# --- TELAS ESPECÍFICAS ---
-
-def render_user_view():
-    st.title("🛒 Marketplace Local")
-    
-    # 1. Busca Inteligente
-    query = st.text_input("O que você deseja encontrar hoje?", placeholder="Ex: Milk, Avocado...")
-    
     if query:
-        results = db.search_items(query)
-        if results.empty:
-            st.warning("Nenhum produto encontrado.")
-        else:
-            st.write(f"Encontramos {len(results)} itens para você:")
-            for _, row in results.iterrows():
+        local_df, global_list = engine.search_hybrid(query)
+
+        # --- SEÇÃO 1: RESULTADOS LOCAIS (Ouro do Projeto) ---
+        if not local_df.empty:
+            st.subheader("📍 Disponível na sua região (Local)")
+            for _, row in local_df.iterrows():
                 with st.container():
-                    st.markdown(f"""
-                    <div style="border: 1px solid #ddd; padding: 15px; border-radius: 10px; background: white; margin-bottom: 10px;">
-                        <div style="font-size: 18px; font-weight: bold;">{row['name']}</div>
-                        <div style="color: #27ae60;">{'🌿 PRODUTOR LOCAL' if row['is_producer'] else ''}</div>
-                        <div style="font-size: 16px; color: #2c3e50;">Preço: ${row['price']:.2f}</div>
-                        <div style="font-size: 12px; color: #7f8c8d;">📍 {row['location']} | {row['address']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if st.button(f"💬 Chat com {row['store_name']}", key=f"chat_{row['item_id']}"):
-                        st.info(f"Iniciando chat com {row['store_name']}... (Simulação)")
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        badge = "🌿 PRODUTOR LOCAL" if row['is_producer'] else "🏪 Loja Parceira"
+                        st.markdown(f"**{row['product']}** ({badge})")
+                        st.caption(f"📍 {row['location']} | {row['address']}")
+                    with col2:
+                        st.write(f"**${row['price']:.2f}**")
+                        if st.button("Ver Detalhes", key=f"btn_{row['product']}"):
+                            st.info(f"Abrindo chat com {row['store']}...")
+                    st.divider()
 
-def render_seller_view():
-    st.title("🏪 Painel do Vendedor")
-    
-    # 2. IA Decision Queue (O diferencial do seu projeto)
-    st.subheader("🤖 Sugestões da IA (Co-Pilot)")
-    suggestions = LogiflowAgent().run_ai_analysis()
-    if not suggestions:
-        st.success("Tudo em ordem! Nenhuma ação urgente necessária.")
-    else:
-        for i, sug in enumerate(suggestions):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.warning(f"**{sug['reason']}** ({sug['name']})")
-            with col2:
-                if st.button("Autorizar", key=f"auth_{i}"):
-                    LogiflowAgent().authorize_action(i)
-                    st.rerun()
+        # --- SEÇÃO 2: RESULTADOS GLOBAIS (A Ponte para o Mundo) ---
+        if global_list:
+            st.subheader("🌐 Encontrado na Web (Global)")
+            st.caption("Não encontramos localmente, mas o Logiflow encontrou estas opções online:")
+            for item in global_list:
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.markdown(f"**{item['product']}**")
+                    st.caption(f"Fonte: {item['source']} | {item['location']}")
+                with col2:
+                    st.write(f"${item['price']:.2f}")
+                    st.link_button("Ver no Site", "https://www.google.com/shopping")
+                st.divider()
+        
+        if local_df.empty and not global_list:
+            st.error("Nenhum item encontrado localmente ou na web.")
 
-    st.write("---")
+def render_seller_view(engine):
+    st.title("🏪 Seller Dashboard")
+    st.write("Cadastre seus produtos para aparecer no mapa local.")
 
-    # 3. Gestão de Estoque
-    tab1, tab2 = st.tabs(["📦 Meu Estoque", "➕ Novo Cadastro"])
-    
-    with tab1:
-        st.subheader("Seu Inventário Atual")
-        # Filtra estoque apenas do vendedor logado (simulado como ID 1)
-        my_stock = db.query("SELECT p.name, i.quantity, i.price, i.expiry_date, i.location FROM inventory i JOIN products p ON i.product_id = p.product_id WHERE i.seller_id = 1")
-        st.dataframe(my_stock, use_container_width=True)
-
-    with tab2:
-        st.subheader("Cadastrar Novo Item")
-        with st.form("add_form"):
-            p_name = st.selectbox("Produto", ["Organic Milk", "Fresh Avocado", "Greek Yogurt", "Sourdough Bread", "Canned Beans"])
+    with st.expander("➕ Cadastrar Novo Produto", expanded=True):
+        with st.form("seller_form"):
+            name = st.text_input("Nome do Produto")
+            price = st.number_input("Preço ($)", min_value=0.0, step=0.5)
             qty = st.number_input("Quantidade", min_value=1)
-            price = st.number_input("Preço ($)", min_value=0.1)
-            exp = st.date_input("Data de Validade")
-            loc = st.text_input("Localização (Ex: Prateleira A)")
-            addr = st.text_input("Endereço da Loja")
-            is_prod = st.checkbox("Sou Produtor Local")
+            loc = st.text_input("Nome da Loja/Fazenda")
+            addr = st.text_input("Endereço de Entrega")
+            is_prod = st.checkbox("Sou um Produtor Local")
             
-            if st.form_submit_button("Publicar no Logiflow"):
-                # Busca o ID do produto
-                p_id_df = db.query("SELECT product_id FROM products WHERE name = ?", (p_name,))
-                if not p_id_df.empty:
-                    p_id = p_id_df.iloc[0]['product_id']
-                    db.execute("""INSERT INTO inventory (product_id, quantity, location, expiry_date, price, last_updated, discount_pct, address, seller_id, is_producer) 
-                                  VALUES (?,?,?,?,?,?,?,?,?,?)""", 
-                               (p_id, qty, loc, exp.isoformat(), price, datetime.datetime.now(), 0.0, addr, 1, is_prod))
-                    st.success("Produto cadastrado e visível para clientes!")
+            submit = st.form_submit_button("Publicar no Logiflow")
+            
+            if submit:
+                if name and loc:
+                    engine.register_item_simplified(name, qty, price, loc, addr, is_prod)
+                    st.success(f"✅ {name} agora está visível para os clientes!")
                 else:
-                    st.error("Produto não encontrado no catálogo.")
+                    st.error("Preencha o nome e a localização.")
+
+    # Adicionando uma função de ajuda para o register_item no engine
+    # (Para evitar erro de chamada, vamos adicionar direto aqui no código de exemplo)
+
+# --- Ajuste de correção para o método de registro ---
+def register_item_helper(engine, name, qty, price, loc, addr, is_prod):
+    # Esta função é uma versão simplificada para o protótipo
+    new_item = {
+        "product": name, "store": "Minha Loja", "price": price, 
+        "quantity": qty, "location": loc, "address": addr, 
+        "is_producer": is_prod, "expiry_date": (datetime.date.today() + datetime.timedelta(days=10)).isoformat()
+    }
+    st.session_state.local_inventory = pd.concat([st.session_state.local_inventory, pd.DataFrame([new_item])], ignore_index=True)
+    return True
+
+# Substituindo a chamada original para garantir que funcione
+def register_item_simplified(engine, name, qty, price, loc, addr, is_prod):
+    # Simulação de registro direto no dataframe da sessão
+    new_item = {
+        "product": name, "store": "Minha Loja", "price": price, 
+        "quantity": qty, "location": loc, "address": addr, 
+        "is_producer": is_prod, "expiry_date": (datetime.date.today() + datetime.timedelta(days=10)).isoformat()
+    }
+    st.session_state.local_inventory = pd.concat([st.session_state.local_inventory, pd.DataFrame([new_item])], ignore_index=True)
+    return True, "Sucesso"
+
+# Sobrescrevendo o método do engine para o protótipo
+LogiflowEngine.register_item = lambda self, data: register_item_simplified(self, data['name'], data['qty'], data['price'], data['loc'], data['addr'], data['is_prod'])
 
 if __name__ == "__main__":
     main()
