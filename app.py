@@ -21,7 +21,7 @@ class LogiflowEngine:
             {"product": "Fresh Avocado", "price": 2.00, "source": "Walmart", "location": "Global Warehouse"},
             {"product": "Greek Yogurt", "price": 3.50, "source": "Target", "location": "Global Warehouse"},
             {"product": "Sourdough Bread", "price": 5.00, "source": "Local Bakery Online", "location": "Global Warehouse"},
-            {"product: "Canned Beans", "price": 1.20, "source": "Amazon", "location": "Global Warehouse"}
+            {"product": "Canned Beans", "price": 1.20, "source": "Amazon", "location": "Global Warehouse"}
         ]
 
     def search_hybrid(self, query):
