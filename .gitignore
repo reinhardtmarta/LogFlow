@@ -1,0 +1,10 @@
+# Byte-compiled / optimized / end-of-line de forma diferente
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases
+*.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
