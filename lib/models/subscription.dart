@@ -105,26 +105,23 @@ extension SubscriptionStatusX on SubscriptionStatus {
   }
 }
 
-class PixPayment {
-  final String preferenceId;
-  final String? qrCodeBase64;
-  final String? copyPaste;
+class StripeCheckoutSession {
+  final String sessionId;
+  final String checkoutUrl;
   final int amountCents;
   final String externalReference;
 
-  PixPayment({
-    required this.preferenceId,
-    this.qrCodeBase64,
-    this.copyPaste,
+  StripeCheckoutSession({
+    required this.sessionId,
+    required this.checkoutUrl,
     required this.amountCents,
     required this.externalReference,
   });
 
-  factory PixPayment.fromMap(Map<String, dynamic> data) {
-    return PixPayment(
-      preferenceId: (data['preference_id'] ?? '').toString(),
-      qrCodeBase64: data['qr_code_base64']?.toString(),
-      copyPaste: (data['copy_paste'] ?? data['qr_code'])?.toString(),
+  factory StripeCheckoutSession.fromMap(Map<String, dynamic> data) {
+    return StripeCheckoutSession(
+      sessionId: (data['checkout_session_id'] ?? '').toString(),
+      checkoutUrl: (data['checkout_url'] ?? '').toString(),
       amountCents: (data['amount_cents'] is num)
           ? (data['amount_cents'] as num).toInt()
           : int.tryParse(data['amount_cents']?.toString() ?? '0') ?? 0,
