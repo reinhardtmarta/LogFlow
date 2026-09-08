@@ -24,3 +24,34 @@ plugins {
 }
 
 include(":app")
+
+// Manually include Flutter native plugins from .flutter-plugins-dependencies
+// This is a workaround for flutter-plugin-loader not auto-including them
+fun Settings.includeFlutterNativePlugins(flutterSourceDir: String) {
+    val pluginsFile = file("$flutterSourceDir/.flutter-plugins-dependencies")
+    if (!pluginsFile.exists()) return
+
+    val json = groovy.json.JsonSlurper().parseText(pluginsFile.readText())
+    val androidPlugins = (json.plugins.android as List<Any>)?.filter { (it as Map<String, Any>)["native_build"] as? Boolean == true } ?: return
+
+    androidPlugins.forEach { plugin ->
+        val pluginMap = plugin as Map<String, Any>
+        val name = pluginMap["name"] as String
+        val path = pluginMap["path"] as String
+        val pluginDir = file(path)
+        if (pluginDir.exists()) {
+            include(":$name")
+            project(":$name").projectDir = pluginDir
+            println("Included Flutter native plugin: $name from $path")
+        }
+    }
+}
+
+// Get flutter source path from local.properties
+val flutterSourceDir: String by lazy {
+    val properties = java.util.Properties()
+    file("local.properties").inputStream().use { properties.load(it) }
+    "${properties.getProperty("flutter.sdk")}/../.."
+}
+
+includeFlutterNativePlugins(flutterSourceDir)

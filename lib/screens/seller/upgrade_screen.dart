@@ -162,19 +162,23 @@ class _UpgradeScreenState extends State<UpgradeScreen> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            RadioListTile<PaymentMethod>(
-              value: PaymentMethod.pix,
+            RadioGroup<PaymentMethod>(
               groupValue: _selectedMethod,
               onChanged: (v) => setState(() => _selectedMethod = v!),
-              title: const Text('Pix (Mercado Pago)'),
-              subtitle: const Text('Recomendado • QR Code instantâneo'),
-            ),
-            RadioListTile<PaymentMethod>(
-              value: PaymentMethod.googlePlay,
-              groupValue: _selectedMethod,
-              onChanged: (v) => setState(() => _selectedMethod = v!),
-              title: const Text('Google Play (assinatura mensal)'),
-              subtitle: const Text('Fallback se Pix não estiver disponível'),
+              child: Column(
+                children: [
+                  RadioListTile<PaymentMethod>(
+                    value: PaymentMethod.pix,
+                    title: const Text('Pix (Mercado Pago)'),
+                    subtitle: const Text('Recomendado • QR Code instantâneo'),
+                  ),
+                  RadioListTile<PaymentMethod>(
+                    value: PaymentMethod.googlePlay,
+                    title: const Text('Google Play (assinatura mensal)'),
+                    subtitle: const Text('Fallback se Pix não estiver disponível'),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             if (_selectedMethod == PaymentMethod.pix)
