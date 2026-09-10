@@ -36,6 +36,10 @@ ios/.generated/
 xcuserdata/
 ios/Runner/GoogleService-Info.plist
 
+# Google Services
+google-services.json
+GoogleService-Info.plist
+
 # Web
 build/web/
 
