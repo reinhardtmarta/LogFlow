@@ -6,6 +6,7 @@
 .pub-cache/
 .pub/
 build/
+build/web/
 
 # Android
 android/local.properties
@@ -53,9 +54,6 @@ build/web/
 
 # Secrets
 .env
-*.db
-__pycache__/
-# Bancos de dados locais
 *.sqlite
 
 # Python
