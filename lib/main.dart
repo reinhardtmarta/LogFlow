@@ -9,6 +9,7 @@ import 'package:logiflow/screens/auth/login_screen.dart';
 import 'package:logiflow/screens/auth/register_screen.dart';
 import 'package:logiflow/screens/home/home_screen.dart';
 import 'package:logiflow/firebase_options.dart';
+import 'package:logiflow/l10n/app_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,15 +60,9 @@ class LogiFlowApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       // --- INTERNACIONALIZAÇÃO ---
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('pt'),
-        Locale('en'),
-      ],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+
 
       theme: ThemeData(
         colorSchemeSeed: Colors.green,

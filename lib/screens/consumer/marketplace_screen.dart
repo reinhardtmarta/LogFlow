@@ -70,12 +70,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     final daysLeft = product.expiryDate.difference(DateTime.now()).inDays;
                     final isRescue = daysLeft <= 3;
 
+                    final imageUrl = product.imagePaths.isNotEmpty
+                        ? product.imagePaths.first
+                        : product.imagePath;
+
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       child: ListTile(
-                        leading: product.imagePath != null 
-                            ? Image.network(product.imagePath!, width: 50, height: 50, fit: BoxFit.cover)
-                            : const Icon(Icons.fastfood, color: Colors.green),
+                        leading: imageUrl != null && imageUrl.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  imageUrl,
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    width: 50,
+                                    height: 50,
+                                    color: Colors.green.shade50,
+                                    child: const Icon(Icons.fastfood, color: Colors.green),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.fastfood, color: Colors.green),
+                              ),
                         title: Row(
                           children: [
                             Expanded(

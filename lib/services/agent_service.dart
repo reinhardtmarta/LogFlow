@@ -43,7 +43,7 @@ class AgentService {
 
   static Future<void> initialize(String apiKey) async {
     _model = GenerativeModel(
-      model: 'gemma-4-26b-a4b.', 
+      model: 'gemini-1.5-flash', 
       apiKey: apiKey,
       systemInstruction: Content.system(_systemInstruction),
     );

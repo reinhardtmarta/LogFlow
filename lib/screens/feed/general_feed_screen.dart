@@ -55,16 +55,15 @@ class _GeneralFeedScreenState extends State<GeneralFeedScreen> {
           // Botão para o usuário pedir uma nova análise da IA
           IconButton(
             icon: Icon(_isAnalyzing ? Icons.hourglass_empty : Icons.auto_awesome, color: Colors.white),
+            tooltip: 'Gerar Dica da IA',
             onPressed: _isAnalyzing ? null : () async {
-              // Pegamos a lista atual para a IA analisar
-              // Nota: Em um app real, você passaria a lista que já está no Stream
-              // Para este exemplo, vamos assumir que a lista é acessível.
+              setState(() => _aiInsightMessage = null);
             },
           ),
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             onPressed: () {
-              // Lógica para ir para o perfil
+              // Perfil do usuário
             },
           )
         ],
@@ -145,7 +144,7 @@ class _GeneralFeedScreenState extends State<GeneralFeedScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withValues(alpha: 0.3),
+            color: Colors.green.withOpacity(0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -188,7 +187,7 @@ class _GeneralFeedScreenState extends State<GeneralFeedScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: isPremium ? Colors.green.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.05),
+            color: isPremium ? Colors.green.withOpacity(0.2) : Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -286,9 +285,9 @@ class _GeneralFeedScreenState extends State<GeneralFeedScreen> {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
+        border: Border.all(color: color.withOpacity(0.5), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
